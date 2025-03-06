@@ -1,0 +1,108 @@
+{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+    <!-- Summary Cards -->
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">Total Income</div>
+            <div class="card-body">
+                <h5 class="card-title">₹{{ total_income }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-header">Total Expense</div>
+            <div class="card-body">
+                <h5 class="card-title">₹{{ total_expense }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white {% if savings < 0 %}bg-warning{% else %}bg-primary{% endif %} mb-3">
+            <div class="card-header">Savings</div>
+            <div class="card-body">
+                <h5 class="card-title">₹{{ savings }}</h5>
+                {% if savings < 0 %}
+                    <p class="card-text text-white">Warning: Your savings are negative! You are spending more than you earn.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="row">
+    <div class="col-md-8">
+        <canvas id="financeChart"></canvas>
+    </div>
+</div>
+<div class="col-md-12 mb-3">
+    <form action="{% url 'reset_transactions' %}" method="post" onsubmit="return confirm('Are you sure you want to reset all transactions? This action cannot be undone.');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Reset All Transactions</button>
+    </form>
+</div>
+
+<!-- Transactions List -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h2>Transactions</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.type }}</td>
+                    <td>{{ transaction.category }}</td>
+                    <td>₹{{ transaction.amount }}</td>
+                    <td>{{ transaction.date }}</td>
+                    <td>{{ transaction.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script>
+    const ctx = document.getElementById('financeChart').getContext('2d');
+    const financeChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Income', 'Expense'],
+            datasets: [{
+                label: 'Amount (₹)',
+                data: [{{ total_income }}, {{ total_expense }}],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(255, 99, 132, 0.2)',
+                ],
+                borderColor: [
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 99, 132, 1)',
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
